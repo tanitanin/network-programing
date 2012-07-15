@@ -22,6 +22,8 @@ int main(int argc, char **argv)
   int rsize;
   char buf[BUFSIZE];
 
+  int pid;
+
   // generate socket
   if((listen_fd = socket(AF_INET, SOCK_STREAM, 0))<0) {
     perror("socket");
@@ -56,14 +58,15 @@ int main(int argc, char **argv)
       perror("accept");
       exit(EXIT_FAILURE);
     }
-    close(listen_fd);
     
-    // read
-    while(rsize = read(conn_fd, buf, BUFSIZE)) {
-      write(conn_fd, buf, rsize);
+    if((pid = fork()) == 0) {
+      // read
+      while(rsize = read(conn_fd, buf, BUFSIZE)) {
+        write(conn_fd, buf, rsize);
+      }
+      close(conn_fd);
     }
-    close(conn_fd);
   }
-  
+  close(listen_fd);
   return 0;
 }
