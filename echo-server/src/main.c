@@ -9,50 +9,50 @@
 #define BUFSIZE 1024
 #define PORT 40320
 
-int main(int argc, char **argv)
+// socket bind and listen
+int server_socket(void)
 {
   struct sockaddr_in saddr; // address for server
-  struct sockaddr_in caddr; // address for client
-
+  int len = sizeof(saddr);
   int listen_fd;
-  int conn_fd;
-
-  int len = sizeof(caddr);
-
-  int rsize;
-  char buf[BUFSIZE];
-
-  int pid;
-
+  
   // generate socket
   if((listen_fd = socket(AF_INET, SOCK_STREAM, 0))<0) {
     perror("socket");
-    exit(EXIT_FAILURE);
+    return -1;
   }
-  printf("generated socket.\n");
-
-  bzero((char *)&saddr, sizeof(saddr));
-
+  
   // bind
+  bzero((char *)&saddr, sizeof(saddr));
   saddr.sin_family = AF_INET;
   saddr.sin_addr.s_addr = INADDR_ANY;
   saddr.sin_port = htons(PORT);
   if(bind(listen_fd, (struct sockaddr *)&saddr, len) < 0) {
     perror("bind");
-    exit(EXIT_FAILURE);
+    return -2;
   }
-  printf("binded\n");
-
+  
   // listen
   if(listen(listen_fd, 5) < 0) {
     perror("listen");
-    exit(EXIT_FAILURE);
+    return -3;
   }
-  printf("Start listening port %d ...\n", PORT);
+  return listen_fd;
+}
+
+// accept loop
+int accept_loop(int listen_fd)
+{
+  int conn_fd;
+  struct sockaddr_in caddr; // address for client
+  int len = sizeof(caddr);
+  int rsize;
+  char buf[BUFSIZE];
+  int pid;
 
   while(1) {
     len = sizeof(caddr);
-
+    
     // connection
     if((conn_fd = accept(listen_fd,(struct sockaddr *)&caddr,&len)) < 0) {
       perror("accept");
@@ -65,8 +65,23 @@ int main(int argc, char **argv)
         write(conn_fd, buf, rsize);
       }
       close(conn_fd);
+      exit(0);
     }
+    close(conn_fd);
   }
+}
+
+int main(int argc, char **argv)
+{
+  int listen_fd;
+
+  if((listen_fd = server_socket())<0) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+  
+  accept_loop(listen_fd);
+  
   close(listen_fd);
   return 0;
 }
