@@ -6,7 +6,7 @@ BINDIR = bin
 
 #
 CC = gcc
-CFLAGS = 
+CFLAGS = -Wall -lpthread
 
 #
 $(BINDIR)/server: $(SRCDIR)/main.o
