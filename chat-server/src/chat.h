@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <dequeue>
+#include <deque>
 #include <set>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio.hpp>
@@ -15,17 +15,18 @@
 //-------------------------------------
 class ChatMessage
 {
+public:
+  enum {header_length = 4};
+  enum {max_body_length = 512};
 private:
   char data_[header_length + max_body_length];
   size_t body_length_;
 public:
-  enum {header_length = 4};
-  enum {max_body_length = 512};
-  ChatMessage(): body_length_(0);
-  const char *data() const { return data; }
-  char *data() { return data; }
+  ChatMessage(): body_length_(0) {}
+  const char *data() const { return data_; }
+  char *data() { return data_; }
   size_t length() const { return header_length + body_length_; }
-  char *body() const { return data_ + header_length; }
+  char *body() { return data_ + header_length; }
   size_t body_length() const { return body_length_; }
   void body_length(size_t length);
   bool decode_header();
@@ -47,7 +48,7 @@ class ChatRoom
 private:
   std::set<chat_participant_ptr> participants_;
   enum { max_recent_msgs =  100 };
-  std::dequeue<ChatMessage> recent_msgs_;
+  std::deque<ChatMessage> recent_msgs_;
 public:
   void join(chat_participant_ptr);
   void leave(chat_participant_ptr);
@@ -57,15 +58,16 @@ public:
 //-------------------------------------
 class ChatSession
   : public ChatParticipant,
-    public boost::enable_shared_from_this(ChatSession)
+    public boost::enable_shared_from_this<ChatSession>
 {
 private:
   boost::asio::ip::tcp::socket socket_;
   ChatRoom& room_;
   ChatMessage read_msg_;
-  std::dequeue<ChatMessage> write_msgs_;
+  std::deque<ChatMessage> write_msgs_;
 public:
-  ChatSession(boost::asio::io_service& is, ChatRoom& room):socket_(is), room_(room) {}
+  ChatSession(boost::asio::io_service& is, ChatRoom& room): socket_(is), room_(room) {}
+  boost::asio::ip::tcp::socket& socket() { return socket_; }
   void start();
   void deliver(const ChatMessage&);
   void handle_read_header(const boost::system::error_code&);
