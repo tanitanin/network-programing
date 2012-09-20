@@ -1,0 +1,4 @@
+service hoge {
+  string get(0:string key)
+  string set(0:string key, 1:string val)
+}
