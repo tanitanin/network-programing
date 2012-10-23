@@ -16,10 +16,12 @@ public:
   void set(msgpack::rpc::request req, const std::string& key, std::string& val) {
     //kvs[key] = val;
     kvs.insert(std::map<std::string,std::string>::value_type(key,val));
+    std::cerr << ": set:" << key << " " << val << std::endl;
     req.result(true);
   }
   
   void get(msgpack::rpc::request req, const std::string& key) {
+    std::cerr << ": get:" << key << std::endl;
     req.result(kvs[key]);
   }
   
